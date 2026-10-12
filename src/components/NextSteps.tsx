@@ -18,7 +18,7 @@ const STEPS = [
 
 export function NextSteps() {
   return (
-    <section aria-labelledby="next-steps-title" className="bg-navy py-24 text-ivory lg:py-28">
+    <section id="how-it-works" aria-labelledby="next-steps-title" className="bg-navy py-24 text-ivory lg:py-28">
       <div className="container-page">
         <div className="mx-auto max-w-2xl text-center">
           <p className="eyebrow justify-center !text-gold">What Happens Next</p>

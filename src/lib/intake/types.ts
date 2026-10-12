@@ -30,6 +30,8 @@ export interface IntakePayload {
   fullName: string;
   email: string;
   phone: string;
+  /** "+15551234567", or "" when no phone was given. */
+  phoneE164: string;
   helpType: string;
   helpTypeKey: HelpTypeKey;
   contactMethod: ContactMethod;

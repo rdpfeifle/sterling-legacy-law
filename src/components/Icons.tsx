@@ -105,3 +105,11 @@ export function CloseIcon(props: IconProps) {
     </Base>
   );
 }
+
+export function ChevronDown(props: IconProps) {
+  return (
+    <Base strokeWidth={1.5} {...props}>
+      <path d="m6.5 9.5 5.5 5.5 5.5-5.5" />
+    </Base>
+  );
+}

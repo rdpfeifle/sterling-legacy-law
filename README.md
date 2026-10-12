@@ -44,6 +44,7 @@ IntakeForm (client)  →  POST /api/intake (Next.js route)  →  N8N_WEBHOOK_URL
   "fullName": "Eleanor Whitfield",
   "email": "eleanor.whitfield@example.com",
   "phone": "(555) 014-2290",
+  "phoneE164": "+15550142290",
   "helpType": "Will or trust",
   "helpTypeKey": "will_or_trust",
   "contactMethod": "email",
@@ -53,7 +54,7 @@ IntakeForm (client)  →  POST /api/intake (Next.js route)  →  N8N_WEBHOOK_URL
 }
 ```
 
-`helpTypeKey` is one of `estate_planning`, `will_or_trust`, `probate`, `power_of_attorney`, `other`.
+`phone` is always US format `(000) 000-0000` (or empty). `helpTypeKey` is one of `estate_planning`, `will_or_trust`, `probate`, `power_of_attorney`, `other`.
 
 ## n8n setup checklist
 

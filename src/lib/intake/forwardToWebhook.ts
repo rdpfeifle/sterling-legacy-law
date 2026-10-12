@@ -1,3 +1,4 @@
+import { toE164 } from "./format";
 import { HELP_TYPES, type IntakeFormValues, type IntakePayload } from "./types";
 
 const TIMEOUT_MS = 15_000;
@@ -13,6 +14,7 @@ export function buildPayload(
     fullName: v.fullName.trim(),
     email: v.email.trim().toLowerCase(),
     phone: v.phone.trim(),
+    phoneE164: toE164(v.phone),
     helpType: HELP_TYPES.find((t) => t.value === helpTypeKey)?.label ?? helpTypeKey,
     helpTypeKey,
     contactMethod: v.contactMethod,

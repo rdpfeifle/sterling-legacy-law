@@ -1,34 +1,6 @@
-import type { ComponentType, SVGProps } from "react";
-import { ArrowRight, EstateIcon, ProbateIcon, WillIcon } from "./Icons";
+import { ArrowRight } from "./Icons";
 import { SectionHeading } from "./SectionHeading";
-
-type Service = {
-  id: string;
-  title: string;
-  body: string;
-  Icon: ComponentType<SVGProps<SVGSVGElement>>;
-};
-
-const SERVICES: Service[] = [
-  {
-    id: "estate-planning",
-    title: "Estate Planning",
-    body: "Plan ahead with documents and arrangements that reflect your wishes and help protect the people who matter most.",
-    Icon: EstateIcon,
-  },
-  {
-    id: "wills-trusts",
-    title: "Wills & Trusts",
-    body: "Explore options for documenting your wishes and planning how your assets may be managed and distributed.",
-    Icon: WillIcon,
-  },
-  {
-    id: "probate",
-    title: "Probate & Estate Administration",
-    body: "Navigate the estate administration process with clearer expectations and guidance through the steps ahead.",
-    Icon: ProbateIcon,
-  },
-];
+import { SERVICES, type Service } from "./services-data";
 
 function ServiceCard({ id, title, body, Icon, index }: Service & { index: number }) {
   return (

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "react";
+import { formatUSPhone, sanitizeEmail, sanitizeName } from "@/lib/intake/format";
 import { submitIntake } from "@/lib/intake/submitIntake";
 import {
   EMPTY_VALUES,
@@ -51,10 +52,17 @@ export function IntakeForm() {
     else if (key === "contactMethod" && touched.phone) setErrors(validateIntake(next));
   }
 
+  // Each field only ever holds characters of the right kind.
+  const SANITIZE: Partial<Record<keyof IntakeFormValues, (raw: string) => string>> = {
+    fullName: sanitizeName,
+    email: sanitizeEmail,
+    phone: formatUSPhone,
+  };
+
   const onText =
     (key: Exclude<keyof IntakeFormValues, "contactMethod" | "helpType">) =>
     (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
-      update(key, e.target.value);
+      update(key, SANITIZE[key]?.(e.target.value) ?? e.target.value);
 
   const onBlur = (field: IntakeField) => () => {
     setTouched((t) => ({ ...t, [field]: true }));
@@ -138,6 +146,7 @@ export function IntakeForm() {
             label="Full name"
             required
             autoComplete="name"
+            placeholder="Jane Doe"
             maxLength={LIMITS.fullName}
             value={values.fullName}
             onChange={onText("fullName")}
@@ -154,6 +163,9 @@ export function IntakeForm() {
           required
           autoComplete="email"
           inputMode="email"
+          autoCapitalize="none"
+          spellCheck={false}
+          placeholder="jane.doe@example.com"
           maxLength={LIMITS.email}
           value={values.email}
           onChange={onText("email")}
@@ -166,9 +178,9 @@ export function IntakeForm() {
           name="phone"
           type="tel"
           label="Phone number"
-          autoComplete="tel"
-          inputMode="tel"
-          maxLength={LIMITS.phone}
+          autoComplete="tel-national"
+          inputMode="numeric"
+          placeholder="(555) 123-4567"
           value={values.phone}
           onChange={onText("phone")}
           onBlur={onBlur("phone")}
