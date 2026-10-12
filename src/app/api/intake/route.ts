@@ -1,6 +1,6 @@
 import { EMPTY_VALUES, type IntakeFormValues, type SubmitResult } from "@/lib/intake/types";
 import { validateIntake } from "@/lib/intake/validate";
-import { buildPayload, forwardToWebhook, getWebhookConfig } from "@/lib/intake/forwardToWebhook";
+import { buildPayload, forwardToWebhook } from "@/lib/intake/forwardToWebhook";
 
 const UUID_RE = /^[0-9a-f-]{16,64}$/i;
 
@@ -28,10 +28,10 @@ export async function POST(request: Request) {
     company: str("company"),
   };
 
-  const config = getWebhookConfig();
+  const webhookUrl = process.env.N8N_WEBHOOK_URL?.trim();
 
   // Honeypot filled: quietly accept without forwarding anything.
-  if (values.company) return json({ status: config ? "live" : "demo" });
+  if (values.company) return json({ status: webhookUrl ? "live" : "demo" });
 
   const fieldErrors = validateIntake(values);
   if (Object.keys(fieldErrors).length > 0) {
@@ -43,14 +43,14 @@ export async function POST(request: Request) {
 
   const submissionId = UUID_RE.test(str("submissionId")) ? str("submissionId") : crypto.randomUUID();
   const pageUrl = str("pageUrl").slice(0, 500);
-  const payload = buildPayload(values, { submissionId, pageUrl });
+  const payload = buildPayload(values, submissionId, pageUrl);
 
-  if (!config) {
+  if (!webhookUrl) {
     console.info("[intake] demo mode — N8N_WEBHOOK_URL not set; payload not sent:", payload);
     return json({ status: "demo" });
   }
 
-  const ok = await forwardToWebhook(payload, config);
+  const ok = await forwardToWebhook(webhookUrl, payload);
   return ok
     ? json({ status: "live" })
     : json(

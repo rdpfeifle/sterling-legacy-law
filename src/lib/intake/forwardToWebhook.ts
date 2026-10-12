@@ -1,59 +1,38 @@
 import { toE164 } from "./format";
 import { HELP_TYPES, type IntakeFormValues, type IntakePayload } from "./types";
 
-const TIMEOUT_MS = 15_000;
-
-export function buildPayload(
-  v: IntakeFormValues,
-  meta: { submissionId: string; pageUrl: string },
-): IntakePayload {
-  const helpTypeKey = v.helpType as IntakePayload["helpTypeKey"];
+export function buildPayload(v: IntakeFormValues, submissionId: string, pageUrl: string): IntakePayload {
   return {
-    submissionId: meta.submissionId,
+    submissionId,
     submittedAt: new Date().toISOString(),
     fullName: v.fullName.trim(),
     email: v.email.trim().toLowerCase(),
-    phone: v.phone.trim(),
+    phone: v.phone,
     phoneE164: toE164(v.phone),
-    helpType: HELP_TYPES.find((t) => t.value === helpTypeKey)?.label ?? helpTypeKey,
-    helpTypeKey,
+    helpType: HELP_TYPES.find((t) => t.value === v.helpType)?.label ?? v.helpType,
+    helpTypeKey: v.helpType as IntakePayload["helpTypeKey"],
     contactMethod: v.contactMethod,
     description: v.description.trim(),
     source: "sterling-legacy-law-landing",
-    pageUrl: meta.pageUrl,
+    pageUrl,
   };
 }
 
-/** Returns null when no webhook is configured (demo mode). */
-export function getWebhookConfig() {
-  const url = process.env.N8N_WEBHOOK_URL?.trim();
-  if (!url) return null;
-  return { url, secret: process.env.N8N_WEBHOOK_SECRET?.trim() || undefined };
-}
-
-export async function forwardToWebhook(
-  payload: IntakePayload,
-  config: { url: string; secret?: string },
-): Promise<boolean> {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+/** Posts to n8n. Returns true on a 2xx response. */
+export async function forwardToWebhook(url: string, payload: IntakePayload): Promise<boolean> {
+  const secret = process.env.N8N_WEBHOOK_SECRET?.trim();
+  const header = process.env.N8N_WEBHOOK_SECRET_HEADER?.trim() || "X-Intake-Secret";
   try {
-    const res = await fetch(config.url, {
+    const res = await fetch(url, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...(config.secret ? { "X-Intake-Secret": config.secret } : {}),
-      },
+      headers: { "Content-Type": "application/json", ...(secret && { [header]: secret }) },
       body: JSON.stringify(payload),
-      signal: controller.signal,
-      cache: "no-store",
+      signal: AbortSignal.timeout(15_000),
     });
     if (!res.ok) console.error(`[intake] webhook responded ${res.status}`);
     return res.ok;
   } catch (err) {
     console.error("[intake] webhook request failed:", (err as Error).message);
     return false;
-  } finally {
-    clearTimeout(timer);
   }
 }
