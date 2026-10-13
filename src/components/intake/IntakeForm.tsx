@@ -6,14 +6,17 @@ import { submitIntake } from "@/lib/intake/submitIntake";
 import {
   EMPTY_VALUES,
   HELP_TYPES,
+  TURNSTILE_ACTION,
+  TURNSTILE_SITE_KEY,
   type IntakeErrors,
   type IntakeField,
   type IntakeFormValues,
 } from "@/lib/intake/types";
 import { FIELD_ORDER, LIMITS, validateIntake } from "@/lib/intake/validate";
 import { AlertCircle } from "../Icons";
-import { RadioGroup, SelectField, TextAreaField, TextField } from "./fields";
+import { ErrorText, RadioGroup, SelectField, TextAreaField, TextField } from "./fields";
 import { SuccessState } from "./SuccessState";
+import { Turnstile, type TurnstileHandle } from "./Turnstile";
 
 type Status = "idle" | "submitting" | "live" | "demo";
 
@@ -30,7 +33,10 @@ export function IntakeForm() {
   const [status, setStatus] = useState<Status>("idle");
   const [formError, setFormError] = useState<string | null>(null);
   const [liveMessage, setLiveMessage] = useState("");
+  const [turnstileToken, setTurnstileToken] = useState("");
+  const [verifyError, setVerifyError] = useState<string | undefined>();
 
+  const turnstileRef = useRef<TurnstileHandle>(null);
   const inFlight = useRef(false);
   // Reused across retries so n8n can de-duplicate if a request is resent.
   const submissionId = useRef<string>("");
@@ -92,15 +98,23 @@ export function IntakeForm() {
       focusFirstInvalid(errs);
       return;
     }
+    if (!turnstileToken) {
+      const message = "Please complete the verification check below.";
+      setVerifyError(message);
+      setLiveMessage(message);
+      return;
+    }
 
     inFlight.current = true;
     setStatus("submitting");
     setFormError(null);
     setLiveMessage("Submitting your inquiry…");
 
-    const result = await submitIntake(values, submissionId.current);
+    const result = await submitIntake(values, submissionId.current, turnstileToken);
 
     if (result.status === "error") {
+      // The token has been spent either way; get a fresh one before any retry.
+      turnstileRef.current?.reset();
       inFlight.current = false;
       setStatus("idle");
       setFormError(result.message);
@@ -250,6 +264,19 @@ export function IntakeForm() {
           <p>{formError}</p>
         </div>
       )}
+
+      <div>
+        <Turnstile
+          ref={turnstileRef}
+          siteKey={TURNSTILE_SITE_KEY}
+          action={TURNSTILE_ACTION}
+          onToken={(token) => {
+            setTurnstileToken(token);
+            if (token) setVerifyError(undefined);
+          }}
+        />
+        <ErrorText id="intake-turnstile" error={verifyError} />
+      </div>
 
       <div className="space-y-5 border-t border-stone pt-6">
         <button

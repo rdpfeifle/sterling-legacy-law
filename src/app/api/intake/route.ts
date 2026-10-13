@@ -1,6 +1,7 @@
 import { EMPTY_VALUES, type IntakeFormValues, type SubmitResult } from "@/lib/intake/types";
 import { validateIntake } from "@/lib/intake/validate";
 import { buildPayload, forwardToWebhook } from "@/lib/intake/forwardToWebhook";
+import { verifyTurnstile } from "@/lib/intake/verifyTurnstile";
 
 const UUID_RE = /^[0-9a-f-]{16,64}$/i;
 
@@ -14,6 +15,17 @@ export async function POST(request: Request) {
     body = await request.json();
   } catch {
     return json({ status: "error", message: "Invalid request." }, 400);
+  }
+
+  const remoteIp =
+    request.headers.get("cf-connecting-ip") ??
+    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+    undefined;
+  if (!(await verifyTurnstile(body["cf-turnstile-response"], remoteIp))) {
+    return json(
+      { status: "error", message: "We couldn't verify your submission. Please complete the check and try again." },
+      403,
+    );
   }
 
   const str = (k: string) => (typeof body[k] === "string" ? (body[k] as string) : "");

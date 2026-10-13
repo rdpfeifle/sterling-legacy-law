@@ -9,6 +9,7 @@ const TIMEOUT_MS = 20_000;
 export async function submitIntake(
   values: IntakeFormValues,
   submissionId: string,
+  turnstileToken: string,
 ): Promise<SubmitResult> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
@@ -17,7 +18,12 @@ export async function submitIntake(
     const res = await fetch("/api/intake", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...values, submissionId, pageUrl: window.location.href }),
+      body: JSON.stringify({
+        ...values,
+        submissionId,
+        pageUrl: window.location.href,
+        "cf-turnstile-response": turnstileToken,
+      }),
       signal: controller.signal,
     });
     const data = (await res.json().catch(() => null)) as SubmitResult | null;

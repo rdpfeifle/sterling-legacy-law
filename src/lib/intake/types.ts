@@ -6,6 +6,13 @@ export const HELP_TYPES = [
   { value: "other", label: "Other" },
 ] as const;
 
+/** Turnstile action for the intake form; the server requires siteverify to return it. */
+export const TURNSTILE_ACTION = "intake";
+
+/** Public (non-secret) Turnstile site key. */
+export const TURNSTILE_SITE_KEY =
+  process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || "0x4AAAAAAFV_aSFbVrIXwDZb";
+
 export type HelpTypeKey = (typeof HELP_TYPES)[number]["value"];
 export type ContactMethod = "email" | "phone";
 
